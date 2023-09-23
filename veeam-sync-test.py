@@ -100,4 +100,17 @@ def test_if_logfile_path_no_write_permission():
     assert result.returncode == 2
     assert b"Could not open logfile for writing." in std_err
 
-    
+def test_destination_directory_missing_permissions():
+    result = subprocess.Popen("mkdir /tmp/source", stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    result.communicate()
+    assert result.returncode == 0
+
+    result = subprocess.Popen("python3 veeam-sync.py --source /tmp/source --destination /etc/destination --logfile /tmp/logfile", stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    std_out, std_err = result.communicate()
+
+    assert result.returncode == 3
+    assert b"Could not create destination directory." in std_err
+
+    result = subprocess.Popen("rm -R /tmp/source /tmp/logfile", stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    result.communicate()
+    assert result.returncode == 0

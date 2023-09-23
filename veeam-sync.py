@@ -31,8 +31,12 @@ def main(logfile, source, destination):
         exit(1)
 
     if not os.path.exists(destination):
-        os.makedirs(destination)
-        tell("Destination folder created.")
+        try:
+            os.makedirs(destination)
+            tell("Destination folder created.")
+        except:
+            print("Could not create destination directory.", file=sys.stderr)
+            exit(3)
 
 if __name__ == '__main__':
     main()
