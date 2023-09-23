@@ -26,5 +26,9 @@ def main(logfile, source, destination):
         tell("Source folder does not exist.", error=True)
         exit(1)
 
+    if not os.path.exists(destination):
+        os.makedirs(destination)
+        tell("Destination folder created.")
+
 if __name__ == '__main__':
     main()

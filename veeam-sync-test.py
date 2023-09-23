@@ -74,3 +74,23 @@ def test_if_source_does_not_exists():
 
     assert result.returncode == 1
     assert b"Source folder does not exist." in std_err
+
+def test_if_destination_does_not_exists():
+    result = subprocess.Popen("mkdir /tmp/source", stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    result.communicate()
+    assert result.returncode == 0
+
+    result = subprocess.Popen("python3 veeam-sync.py --source /tmp/source --destination /tmp/destination --logfile /tmp/logfile", stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    std_out, std_err = result.communicate()
+
+    assert result.returncode == 0
+    assert b"Destination folder created." in std_out
+    with open('/tmp/logfile') as log:
+        if "Destination folder created." in log.read():
+            pass
+        else:
+            assert False
+
+    result = subprocess.Popen("rm -R /tmp/source /tmp/destination /tmp/logfile", stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    result.communicate()
+    assert result.returncode == 0
