@@ -66,3 +66,13 @@ def test_content_of_logfile():
     result = subprocess.Popen("rm -R /tmp/source /tmp/destination", stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     result.communicate()
     assert result.returncode == 0
+
+
+def test_if_destination_does_not_exists():
+    result = subprocess.Popen("python3 veeam-sync.py --source /tmp/source --destination /tmp/destination --logfile /tmp/logfile", stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    std_out, std_err = result.communicate()
+
+    assert result.returncode == 1
+    assert b"Source folder does not exist." in std_err
+    
+    
