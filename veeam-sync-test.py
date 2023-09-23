@@ -176,10 +176,13 @@ def test_copy_file_from_source_to_destination_multiple_subdirs():
     assert b"Copied '/tmp/source/a_file' to '/tmp/destination/a_file'." in std_out
     with open('/tmp/logfile') as log:
         assert "Copied '/tmp/source/a_file' to '/tmp/destination/a_file'." in log.read()
+    assert b"Copied '/tmp/source/subdir/a_file2' to '/tmp/destination/subdir/a_file2'." in std_out
+    with open('/tmp/logfile') as log:
+        assert "Copied '/tmp/source/subdir/a_file2' to '/tmp/destination/subdir/a_file2'." in log.read()
 
     assert os.path.isdir("/tmp/source/subdir")
     assert os.path.isfile("/tmp/source/subdir/a_file2")
-    
+
     result = subprocess.Popen("rm -R /tmp/source /tmp/destination /tmp/logfile", stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     result.communicate()
     assert result.returncode == 0
