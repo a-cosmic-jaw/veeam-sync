@@ -19,8 +19,12 @@ def tell(msg, error=False):
 @click.option('--destination', type=str, required=True)
 def main(logfile, source, destination):
     global log
-    log = open(logfile, 'w')
-    tell("Logfile found and write permission granted.")
+    try:
+        log = open(logfile, 'w')
+        tell("Logfile found and write permission granted.")
+    except:
+        print("Could not open logfile for writing.", file=sys.stderr)
+        exit(2)
 
     if not os.path.exists(source):
         tell("Source folder does not exist.", error=True)

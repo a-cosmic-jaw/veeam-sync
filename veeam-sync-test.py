@@ -86,11 +86,18 @@ def test_if_destination_does_not_exists():
     assert result.returncode == 0
     assert b"Destination folder created." in std_out
     with open('/tmp/logfile') as log:
-        if "Destination folder created." in log.read():
-            pass
-        else:
+        if not "Destination folder created." in log.read():
             assert False
 
     result = subprocess.Popen("rm -R /tmp/source /tmp/destination /tmp/logfile", stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     result.communicate()
     assert result.returncode == 0
+
+def test_if_logfile_path_no_write_permission():
+    result = subprocess.Popen("python3 veeam-sync.py --source /tmp/source --destination /tmp/destination --logfile /etc/logfile", stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    std_out, std_err = result.communicate()
+
+    assert result.returncode == 2
+    assert b"Could not open logfile for writing." in std_err
+
+    
