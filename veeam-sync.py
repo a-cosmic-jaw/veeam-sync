@@ -1,3 +1,4 @@
+from types import NoneType
 import click
 import os
 import datetime
@@ -6,6 +7,7 @@ from os import walk
 from pathlib import Path
 import shutil
 import subprocess
+import time
 
 log = None
 def tell(msg, error=False):
@@ -17,31 +19,8 @@ def tell(msg, error=False):
         print(msg)
     log.write(msg + "\n")
 
-@click.command()
-@click.option('--logfile', type=str, required=True)
-@click.option('--source', type=str, required=True)
-@click.option('--destination', type=str, required=True)
-def main(logfile, source, destination):
-    global log
-    try:
-        log = open(logfile, 'w')
-        tell("Logfile found and write permission granted.")
-    except:
-        print("Could not open logfile for writing.", file=sys.stderr)
-        exit(2)
-
-    if not os.path.exists(source):
-        tell("Source folder does not exist.", error=True)
-        exit(1)
-
-    if not os.path.exists(destination):
-        try:
-            os.makedirs(destination)
-            tell("Destination folder created.")
-        except:
-            tell("Could not create destination directory.", error=True)
-            exit(3)
-    
+def sync_directories(logfile, source, destination):
+    tell("Starting sync...")
     source_paths = list(Path(source).rglob("*"))
     source_dirs, source_files = [], []
     for path in source_paths:
@@ -78,6 +57,41 @@ def main(logfile, source, destination):
                 tell("Failed removing '" + path_str + "'", error=True)
             else:
                 tell("Removed object '" + path_str + "'")
+    tell("Syncing done.")
+    
+@click.command()
+@click.option('--logfile', type=str, required=True)
+@click.option('--source', type=str, required=True)
+@click.option('--destination', type=str, required=True)
+@click.option('--intervall', type=click.INT, required=False, help="Intervall in seconds for repetative syncing.")
+def main(logfile, source, destination, intervall):
+    global log
+    try:
+        log = open(logfile, 'w')
+        tell("Logfile found and write permission granted.")
+    except:
+        print("Could not open logfile for writing.", file=sys.stderr)
+        exit(2)
 
+    if not os.path.exists(source):
+        tell("Source folder does not exist.", error=True)
+        exit(1)
+
+    if not os.path.exists(destination):
+        try:
+            os.makedirs(destination)
+            tell("Destination folder created.")
+        except:
+            tell("Could not create destination directory.", error=True)
+            exit(3)
+    
+    sync_directories(logfile, source, destination)
+
+    if not intervall == None:
+        while True:
+            time.sleep(intervall)
+            sync_directories(logfile, source, destination)
+
+    
 if __name__ == '__main__':
     main()
