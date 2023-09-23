@@ -186,3 +186,30 @@ def test_copy_file_from_source_to_destination_multiple_subdirs():
     result = subprocess.Popen("rm -R /tmp/source /tmp/destination /tmp/logfile", stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     result.communicate()
     assert result.returncode == 0
+
+def test_copy_removing_files_and_folders_that_is_in_destination_but_not_in_source():
+    result = subprocess.Popen("mkdir -p /tmp/destination/subdir /tmp/source", stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    result.communicate()
+    assert result.returncode == 0
+
+    result = subprocess.Popen("touch /tmp/destination/a_file", stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    result.communicate()
+    assert result.returncode == 0
+
+    result = subprocess.Popen("python3 veeam-sync.py --source /tmp/source --destination /tmp/destination --logfile /tmp/logfile", stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    std_out, std_err = result.communicate()
+
+    assert result.returncode == 0
+    assert b"Removed object '/tmp/destination/subdir'" in std_out
+    with open("/tmp/logfile") as log:
+        assert "Removed object '/tmp/destination/subdir'" in log.read()
+    assert b"Removed object '/tmp/destination/a_file'" in std_out
+    with open("/tmp/logfile") as log:
+        assert "Removed object '/tmp/destination/a_file'" in log.read()
+
+    assert not os.path.isdir("/tmp/destination/subdir")
+    assert not os.path.isfile("/tmp/destination/subdir/a_file2")
+
+    result = subprocess.Popen("rm -R /tmp/source /tmp/destination /tmp/logfile", stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    result.communicate()
+    assert result.returncode == 0
