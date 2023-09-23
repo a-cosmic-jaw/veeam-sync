@@ -1,6 +1,7 @@
 import pytest
 import sys
 import subprocess
+import os
 
 def test_no_logfile():
     result = subprocess.Popen("mkdir /tmp/source /tmp/destination", stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
@@ -112,5 +113,73 @@ def test_destination_directory_missing_permissions():
     assert b"Could not create destination directory." in std_err
 
     result = subprocess.Popen("rm -R /tmp/source /tmp/logfile", stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    result.communicate()
+    assert result.returncode == 0
+
+def test_create_destination_directory_if_missing():
+    result = subprocess.Popen("mkdir /tmp/source", stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    result.communicate()
+    assert result.returncode == 0
+
+    result = subprocess.Popen("python3 veeam-sync.py --source /tmp/source --destination /tmp/destination --logfile /tmp/logfile", stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    std_out, std_err = result.communicate()
+
+    assert result.returncode == 0
+    assert b"Destination folder created." in std_out
+    with open('/tmp/logfile') as log:
+        assert "Destination folder created." in log.read()
+    
+    assert os.path.exists("/tmp/destination")
+
+    result = subprocess.Popen("rm -R /tmp/source /tmp/destination /tmp/logfile", stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    result.communicate()
+    assert result.returncode == 0
+
+def test_copy_file_from_source_to_destination():
+    result = subprocess.Popen("mkdir /tmp/source", stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    result.communicate()
+    assert result.returncode == 0
+
+    result = subprocess.Popen("touch /tmp/source/a_file", stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    result.communicate()
+    assert result.returncode == 0
+
+    result = subprocess.Popen("python3 veeam-sync.py --source /tmp/source --destination /tmp/destination --logfile /tmp/logfile", stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    std_out, std_err = result.communicate()
+
+    assert result.returncode == 0
+    assert b"Copied '/tmp/source/a_file' to '/tmp/destination/a_file'." in std_out
+    with open('/tmp/logfile') as log:
+        assert "Copied '/tmp/source/a_file' to '/tmp/destination/a_file'." in log.read()
+
+    result = subprocess.Popen("rm -R /tmp/source /tmp/destination /tmp/logfile", stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    result.communicate()
+    assert result.returncode == 0
+
+def test_copy_file_from_source_to_destination_multiple_subdirs():
+    result = subprocess.Popen("mkdir -p /tmp/source/subdir", stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    result.communicate()
+    assert result.returncode == 0
+
+    result = subprocess.Popen("touch /tmp/source/a_file", stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    result.communicate()
+    assert result.returncode == 0
+
+    result = subprocess.Popen("touch /tmp/source/subdir/a_file2", stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    result.communicate()
+    assert result.returncode == 0
+
+    result = subprocess.Popen("python3 veeam-sync.py --source /tmp/source --destination /tmp/destination --logfile /tmp/logfile", stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    std_out, std_err = result.communicate()
+
+    assert result.returncode == 0
+    assert b"Copied '/tmp/source/a_file' to '/tmp/destination/a_file'." in std_out
+    with open('/tmp/logfile') as log:
+        assert "Copied '/tmp/source/a_file' to '/tmp/destination/a_file'." in log.read()
+
+    assert os.path.isdir("/tmp/source/subdir")
+    assert os.path.isfile("/tmp/source/subdir/a_file2")
+    
+    result = subprocess.Popen("rm -R /tmp/source /tmp/destination /tmp/logfile", stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     result.communicate()
     assert result.returncode == 0
