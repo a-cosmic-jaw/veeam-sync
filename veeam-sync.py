@@ -4,7 +4,7 @@ import click
 @click.option('--logfile', type=str, required=True)
 @click.option('--source', type=str, required=True)
 @click.option('--destination', type=str, required=True)
-def start():
+def start(logfile, source, destination):
     pass
 
 if __name__ == '__main__':
